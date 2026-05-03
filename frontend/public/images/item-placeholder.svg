@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600">
+  <rect width="900" height="600" fill="#e5e7eb"/>
+  <rect x="90" y="120" width="720" height="360" rx="26" fill="#f9fafb" stroke="#9ca3af" stroke-width="6"/>
+  <path d="M170 410h560M220 360h460M280 310h340" stroke="#6b7280" stroke-width="22" stroke-linecap="round"/>
+  <circle cx="260" cy="210" r="38" fill="#fbbf24"/>
+  <text x="450" y="540" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700" fill="#111827">Baba Deep Singh Shuttering Store</text>
+</svg>
