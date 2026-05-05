@@ -9,7 +9,7 @@ const items = [
   },
   { name: "Channel", price: 5, sizes: ["14ft","12ft", "11ft", "10ft", "9ft", "8ft", "7ft", "6ft", "5ft","4ft","3ft"] },
   { name: "Spot", 
-    variants: [
+    priceOptions: [
       { size: "11ft", price: 2 },
       { size: "10ft", price: 2 },
       { size: "9ft", price: 2 },
@@ -22,7 +22,7 @@ const items = [
   { name: "Chali", price: 10, sizes: ["10ft","9ft", "8ft", "7ft", "6ft"] },
   { name: "Gadar", price: 5, sizes: ["16ft","15ft","14ft","13ft", "12ft", "11ft", "10ft", "9ft", "8ft","7ft"] },
   { name: "Farma",
-    variants: [
+    priceOptions: [
       { size: "9x9 - 6ft", price: 100 },
       { size: "9x6 - 4ft", price: 80 },
       { size: "9x12 - 4ft", price: 80 }
@@ -30,7 +30,7 @@ const items = [
   },
   {
     name: "Scaffolding Frame",
-    variants: [
+    priceOptions: [
       { size: "5ft", price: 30 },
       { size: "6ft", price: 40 },
       { size: "10ft", price: 50 },
@@ -44,7 +44,7 @@ const items = [
   { name: "Durmat Machine", price: 500 },
   { name: "Lifting Machine", price: 500 },
   { name: "Cutter",
-    variants: [
+    priceOptions: [
       { size: "5'", price: 100 },
       { size: "6'", price: 150 },
     ] },

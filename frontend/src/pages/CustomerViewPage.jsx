@@ -14,7 +14,7 @@ const items = [
   { name: "Farma", price: 60, sizes: ["9x9"] },
   {
     name: "Scaffolding Frame",
-    variants: [
+    priceOptions: [
       { size: "5ft", price: 30 },
       { size: "6ft", price: 40 },
       { size: "10ft", price: 50 },
