@@ -5,7 +5,7 @@ const items = [
   {
     name: "Shuttering Plate",
     price: 5,
-    sizes: ["4x2", "4x18", "4x12", "4x15", "4x9", "4x6", "3x2", "3x18", "3x12", "3x15", "3x9", "3x6"],
+    sizes: ["4x2", "4x18", "4x12", "4x15", "4x9", "4x6", "3x2", "3x18", "3x12", "3x15", "3x9", "3x6","Mixed"],
   },
   { name: "Channel", price: 5, sizes: ["12ft", "11ft", "10ft", "9ft", "8ft", "7ft", "6ft", "5ft"] },
   { name: "Spot", price: 2, sizes: ["12ft", "11ft", "10ft", "9ft"] },
@@ -14,7 +14,7 @@ const items = [
   { name: "Farma", price: 60, sizes: ["9x9"] },
   {
     name: "Scaffolding Frame",
-    priceOptions: [
+    variants: [
       { size: "5ft", price: 30 },
       { size: "6ft", price: 40 },
       { size: "10ft", price: 50 },
@@ -23,7 +23,7 @@ const items = [
   { name: "Kainchi", price: 0 },
   { name: "Danda", price: 0 },
   { name: "Durmat Machine", price: 500 },
-  { name: "Lifting Machine", price: 300 },
+  { name: "Lifting Machine", price: 500 },
   { name: "Cutter", price: 100 },
   { name: "Grinder", price: 100 },
 ];

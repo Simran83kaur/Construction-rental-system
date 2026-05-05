@@ -17,7 +17,7 @@ const seedItems = async () => {
 
     await Item.deleteMany();
 
-    const plateSizes = ["4x2","4x18","4x15","4x12","4x9","4x6","3x2","3x18","3x15","3x12","3x9","3x6"];
+    const plateSizes = ["4x2","4x18","4x15","4x12","4x9","4x6","3x2","3x18","3x15","3x12","3x9","3x6","Mixed"];
     const spotSizes = ["12ft","11ft","10ft","9ft"];
     const channelSizes = ["14ft","12ft","11ft","10ft","9ft","8ft","7ft","6ft","5ft"];
 

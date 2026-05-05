@@ -5,16 +5,32 @@ const items = [
   {
     name: "Shuttering Plate",
     price: 5,
-    sizes: ["4x2", "4x18", "4x12", "4x15", "4x9", "4x6", "3x2", "3x18", "3x12", "3x15", "3x9", "3x6"],
+    sizes: ["4x2", "4x21","4x18", "4x15", "4x12", "4x9", "4x6", "3x2", "3x21", "3x18","3x15", "3x12", "3x9", "3x6","3x4","2x2","24x18","24x15","24x9","18x18","18x15","18x9","12x12","Mixed"],
   },
-  { name: "Channel", price: 5, sizes: ["12ft", "11ft", "10ft", "9ft", "8ft", "7ft", "6ft", "5ft"] },
-  { name: "Spot", price: 2, sizes: ["12ft", "11ft", "10ft", "9ft"] },
-  { name: "Chali", price: 10, sizes: ["10ft"] },
-  { name: "Gadar", price: 5, sizes: ["13ft", "12ft", "11ft", "10ft", "9ft", "8ft"] },
-  { name: "Farma", price: 60, sizes: ["9x9"] },
+  { name: "Channel", price: 5, sizes: ["14ft","12ft", "11ft", "10ft", "9ft", "8ft", "7ft", "6ft", "5ft","4ft","3ft"] },
+  { name: "Spot", 
+    variants: [
+      { size: "11ft", price: 2 },
+      { size: "10ft", price: 2 },
+      { size: "9ft", price: 2 },
+      { size: "8ft", price: 2 },
+      { size: "7ft", price: 2 },
+      { size: "12ft", price: 3 },
+      { size: "13ft", price: 3 }
+    ]
+  },
+  { name: "Chali", price: 10, sizes: ["10ft","9ft", "8ft", "7ft", "6ft"] },
+  { name: "Gadar", price: 5, sizes: ["16ft","15ft","14ft","13ft", "12ft", "11ft", "10ft", "9ft", "8ft","7ft"] },
+  { name: "Farma",
+    variants: [
+      { size: "9x9 - 6ft", price: 100 },
+      { size: "9x6 - 4ft", price: 80 },
+      { size: "9x12 - 4ft", price: 80 }
+    ] 
+  },
   {
     name: "Scaffolding Frame",
-    priceOptions: [
+    variants: [
       { size: "5ft", price: 30 },
       { size: "6ft", price: 40 },
       { size: "10ft", price: 50 },
@@ -22,9 +38,16 @@ const items = [
   },
   { name: "Kainchi", price: 0 },
   { name: "Danda", price: 0 },
+  { name: "Fatti", price: 2 },
+  { name: "Helti", price: 500 },
+  { name: "Vibrator", price: 300 },
   { name: "Durmat Machine", price: 500 },
-  { name: "Lifting Machine", price: 300 },
-  { name: "Cutter", price: 100 },
+  { name: "Lifting Machine", price: 500 },
+  { name: "Cutter",
+    variants: [
+      { size: "5'", price: 100 },
+      { size: "6'", price: 150 },
+    ] },
   { name: "Grinder", price: 100 },
 ];
 
