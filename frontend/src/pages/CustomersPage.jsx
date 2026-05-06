@@ -31,9 +31,9 @@ const items = [
   {
     name: "Scaffolding Frame",
     priceOptions: [
-      { size: "5ft", price: 30 },
-      { size: "6ft", price: 40 },
-      { size: "10ft", price: 50 },
+      { size: "5ft", price: 15 },
+      { size: "6ft", price: 20 },
+      { size: "10ft", price: 30 },
     ],
   },
   { name: "Kainchi", price: 0 },
