@@ -1,26 +1,23 @@
 import mongoose from "mongoose";
 
-const customerSchema = new mongoose.Schema(
+const transactionSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    phone: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    address: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    type: { type: String, enum: ["Issue", "Return"], required: true },
+    item: { type: String, required: true },
+    size: { type: String, default: "" },
+    quantity: { type: Number, required: true, min: 1 },
+    date: { type: String, required: true },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-export const Customer = mongoose.model("Customer", customerSchema);
+const customerSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    mobile: { type: String, required: true, trim: true },
+    transactions: [transactionSchema],
+  },
+  { timestamps: true }
+);
+
+export default mongoose.model("Customer", customerSchema);

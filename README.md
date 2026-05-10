@@ -75,3 +75,48 @@ MONGODB_URI=mongodb://127.0.0.1:27017/construction-rental-store
   - Amount paid
   - Remaining amount
   - Paid/unpaid status
+# Rental Management System
+
+## Backend setup
+
+Create `backend/.env` from `backend/.env.example`:
+
+```env
+PORT=5000
+MONGODB_URI=mongodb+srv://USER:PASSWORD@CLUSTER.mongodb.net/shuttering-store
+ADMIN_TOKEN=baba-deep-singh-admin-token
+```
+
+Install/run:
+
+```bash
+cd backend
+npm install
+npm run seed
+npm run dev
+```
+
+Admin login:
+
+```text
+username: admin
+password: 12345
+```
+
+## Frontend setup
+
+Optional `.env` in `frontend`:
+
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
+Run:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Public users see the customer view. Admin login opens the protected dashboard.

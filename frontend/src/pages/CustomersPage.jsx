@@ -20,6 +20,7 @@ const items = [
     ]
   },
   { name: "Chali", price: 10, sizes: ["10ft","9ft", "8ft", "7ft", "6ft"] },
+  {name: "Ghan", price: 20},
   { name: "Gadar", price: 5, sizes: ["16ft","15ft","14ft","13ft", "12ft", "11ft", "10ft", "9ft", "8ft","7ft"] },
   { name: "Farma",
     priceOptions: [
@@ -72,6 +73,7 @@ export default function CustomersPage({
   onAddCustomer,
   onDeleteCustomer,
   onAddTransactions,
+  onDeleteTransaction,
   isOwner,
 }) {
   const [name, setName] = useState("");
@@ -237,6 +239,7 @@ export default function CustomersPage({
                 <th>Size</th>
                 <th>Qty</th>
                 <th>Date</th>
+                {isOwner && <th>Action</th>}
               </tr>
             </thead>
 
@@ -255,6 +258,13 @@ export default function CustomersPage({
                   <td>{t.size}</td>
                   <td>{t.quantity}</td>
                   <td>{t.date}</td>
+                  {isOwner && (
+                    <td>
+                      <button className="details-button remove-button" type="button" onClick={() => onDeleteTransaction(selectedCustomer.id, t._id || t.id)}>
+                        Delete
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import api, { setAuthToken } from "./api";
 import DashboardPage from "./pages/DashboardPage";
 import CustomersPage from "./pages/CustomersPage";
 import CustomerViewPage from "./pages/CustomerViewPage";
 import ItemsPage from "./pages/ItemsPage";
 import RentalsPage from "./pages/RentalsPage";
-
-const IS_OWNER = true;
 
 const pages = [
   { key: "dashboard", label: "Ledger", icon: "📒" },
@@ -14,98 +13,116 @@ const pages = [
   { key: "rentals", label: "Rentals", icon: "🧾" },
 ];
 
-const initialCustomers = [
-  {
-    id: 1,
-    name: "Ramesh Construction",
-    mobile: "9876543210",
-    transactions: [
-      { id: 1, type: "Issue", item: "Shuttering Plate", size: "4x2", quantity: 10, date: "2026-05-01" },
-      { id: 2, type: "Return", item: "Shuttering Plate", size: "4x2", quantity: 4, date: "2026-05-05" },
-      { id: 3, type: "Return", item: "Shuttering Plate", size: "4x2", quantity: 6, date: "2026-05-15" },
-      { id: 4, type: "Issue", item: "Channel", size: "10ft", quantity: 5, date: "2026-05-01" },
-      { id: 5, type: "Return", item: "Channel", size: "10ft", quantity: 5, date: "2026-05-05" },
-    ],
-  },
-  { id: 2, name: "Sharma Builders", mobile: "9123456780", transactions: [] },
-  { id: 3, name: "Khan Contractor", mobile: "9988776655", transactions: [] },
-  { id: 4, name: "Patel Site Work", mobile: "9090909090", transactions: [] },
-];
+const normalizeCustomer = (customer) => ({
+  ...customer,
+  id: customer._id || customer.id,
+  transactions: customer.transactions || [],
+});
 
-const readStorage = (key, fallback) => {
-  try {
-    const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : fallback;
-  } catch {
-    return fallback;
-  }
-};
-
-const writeStorage = (customers, bills) => {
-  try {
-    localStorage.setItem("rms_customers", JSON.stringify(customers));
-    localStorage.setItem(
-      "rms_transactions",
-      JSON.stringify(customers.flatMap((customer) => customer.transactions.map((entry) => ({ ...entry, customerId: customer.id }))))
-    );
-    localStorage.setItem("rms_bills", JSON.stringify(bills));
-  } catch {
-    return;
-  }
-};
+const normalizeBill = (bill) => ({ ...bill, id: bill._id || bill.id });
 
 export default function App() {
-  const [mode, setMode] = useState(IS_OWNER ? "owner" : "customer");
+  const [token, setToken] = useState(localStorage.getItem("adminToken") || "");
+  const [mode, setMode] = useState(token ? "owner" : "customer");
   const [activePage, setActivePage] = useState("dashboard");
-  const [customers, setCustomers] = useState(() => readStorage("rms_customers", initialCustomers));
-  const [bills, setBills] = useState(() => readStorage("rms_bills", []));
+  const [customers, setCustomers] = useState([]);
+  const [bills, setBills] = useState([]);
+  const [loginForm, setLoginForm] = useState({ username: "", password: "" });
+  const [message, setMessage] = useState("");
 
-  const saveCustomers = (nextCustomers) => {
-    setCustomers(nextCustomers);
-    writeStorage(nextCustomers, bills);
+  const isAdmin = Boolean(token);
+
+  const loadAdminData = async (adminToken = token) => {
+    if (!adminToken) return;
+    setAuthToken(adminToken);
+    const [customerRes, billRes] = await Promise.all([api.get("/customers"), api.get("/bills")]);
+    setCustomers(customerRes.data.map(normalizeCustomer));
+    setBills(billRes.data.map(normalizeBill));
   };
 
-  const saveBills = (nextBills) => {
-    setBills(nextBills);
-    writeStorage(customers, nextBills);
+  useEffect(() => {
+    if (token) {
+      loadAdminData(token).catch(() => setMessage("Could not load admin data."));
+    }
+  }, [token]);
+
+  const login = async (event) => {
+    event.preventDefault();
+    try {
+      const res = await api.post("/auth/login", loginForm);
+      localStorage.setItem("adminToken", res.data.token);
+      setAuthToken(res.data.token);
+      setToken(res.data.token);
+      setMode("owner");
+      setMessage("");
+    } catch {
+      setMessage("Invalid admin credentials");
+    }
   };
 
-  const addCustomer = (customer) => {
-    if (!IS_OWNER) return;
-    saveCustomers([
-      ...customers,
-      { id: Date.now(), name: customer.name, mobile: customer.mobile, transactions: [] },
-    ]);
+  const logout = () => {
+    localStorage.removeItem("adminToken");
+    setAuthToken("");
+    setToken("");
+    setMode("customer");
+    setCustomers([]);
+    setBills([]);
   };
 
-  const deleteCustomer = (id) => {
-    if (!IS_OWNER) return;
-    saveCustomers(customers.filter((customer) => customer.id !== id));
+  const addCustomer = async (customer) => {
+    const res = await api.post("/customers", customer);
+    setCustomers((current) => [normalizeCustomer(res.data), ...current]);
   };
 
-  const addTransactions = (customerId, entries) => {
-    if (!IS_OWNER) return;
-    const nextCustomers = customers.map((customer) =>
-      customer.id === Number(customerId)
-        ? {
-            ...customer,
-            transactions: [
-              ...customer.transactions,
-              ...entries.map((entry, index) => ({ ...entry, id: Date.now() + index })),
-            ],
-          }
-        : customer
-    );
-
-    saveCustomers(nextCustomers);
+  const deleteCustomer = async (id) => {
+    await api.delete(`/customers/${id}`);
+    setCustomers((current) => current.filter((customer) => customer.id !== id));
   };
 
-  const saveBill = (bill) => {
-    if (!IS_OWNER) return;
-    saveBills([{ ...bill, id: Date.now() }, ...bills]);
+  const addTransactions = async (customerId, entries) => {
+    const res = await api.post(`/customers/${customerId}/transactions`, { entries });
+    setCustomers((current) => current.map((customer) => (customer.id === customerId ? normalizeCustomer(res.data) : customer)));
+  };
+
+  const deleteTransaction = async (customerId, transactionId) => {
+    const res = await api.delete(`/customers/${customerId}/transactions/${transactionId}`);
+    setCustomers((current) => current.map((customer) => (customer.id === customerId ? normalizeCustomer(res.data) : customer)));
+  };
+
+  const saveBill = async (bill) => {
+    const res = await api.post("/bills", bill);
+    setBills((current) => [normalizeBill(res.data), ...current]);
+  };
+
+  const deleteBill = async (billId) => {
+    await api.delete(`/bills/${billId}`);
+    setBills((current) => current.filter((bill) => bill.id !== billId));
   };
 
   const renderOwnerPage = () => {
+    if (!isAdmin) {
+      return (
+        <div className="card">
+          <h3>Admin Login</h3>
+          <form className="login-form" onSubmit={login}>
+            <input
+              placeholder="Username"
+              value={loginForm.username}
+              onChange={(event) => setLoginForm({ ...loginForm, username: event.target.value })}
+            />
+            <input
+              placeholder="Password"
+              type="password"
+              value={loginForm.password}
+              onChange={(event) => setLoginForm({ ...loginForm, password: event.target.value })}
+            />
+            <button type="submit">Login</button>
+          </form>
+          {message && <p className="entry-message">{message}</p>}
+        </div>
+      );
+    }
+
     if (activePage === "customers") {
       return (
         <CustomersPage
@@ -113,18 +130,19 @@ export default function App() {
           onAddCustomer={addCustomer}
           onDeleteCustomer={deleteCustomer}
           onAddTransactions={addTransactions}
-          isOwner={IS_OWNER}
+          onDeleteTransaction={deleteTransaction}
+          isOwner={isAdmin}
         />
       );
     }
-    if (activePage === "items") return <ItemsPage isOwner={IS_OWNER} />;
-    if (activePage === "rentals") return <RentalsPage customers={customers} bills={bills} onSaveBill={saveBill} isOwner={IS_OWNER} />;
-    return <DashboardPage customers={customers} onDeleteCustomer={deleteCustomer} isOwner={IS_OWNER} />;
+    if (activePage === "items") return <ItemsPage isOwner={isAdmin} />;
+    if (activePage === "rentals") return <RentalsPage customers={customers} bills={bills} onSaveBill={saveBill} onDeleteBill={deleteBill} isOwner={isAdmin} />;
+    return <DashboardPage customers={customers} onDeleteCustomer={deleteCustomer} isOwner={isAdmin} />;
   };
 
   return (
     <div className={mode === "owner" ? "app" : "app customer-app"}>
-      {IS_OWNER && mode === "owner" && (
+      {isAdmin && mode === "owner" && (
         <aside className="sidebar">
           <div className="shop-card">
             <div className="shop-icon">🏗️</div>
@@ -151,16 +169,23 @@ export default function App() {
 
       <main className={mode === "owner" ? "content" : "content customer-content"}>
         <div className="mode-switch">
-          {IS_OWNER && (
+          {isAdmin ? (
+            <>
+              <button className={mode === "owner" ? "active" : ""} type="button" onClick={() => setMode("owner")}>
+                Admin View
+              </button>
+              <button className={mode === "customer" ? "active" : ""} type="button" onClick={() => setMode("customer")}>
+                Customer View
+              </button>
+              <button type="button" onClick={logout}>Logout</button>
+            </>
+          ) : (
             <button className={mode === "owner" ? "active" : ""} type="button" onClick={() => setMode("owner")}>
-              Owner View
+              Admin Login
             </button>
           )}
-          <button className={mode === "customer" ? "active" : ""} type="button" onClick={() => setMode("customer")}>
-            Customer View
-          </button>
         </div>
-        {IS_OWNER && mode === "owner" ? renderOwnerPage() : <CustomerViewPage />}
+        {mode === "owner" ? renderOwnerPage() : <CustomerViewPage />}
       </main>
     </div>
   );

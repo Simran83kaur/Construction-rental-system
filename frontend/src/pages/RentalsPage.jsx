@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import html2canvas from "html2canvas";
 
 const items = [
@@ -20,6 +20,7 @@ const items = [
     ]
   },
   { name: "Chali", price: 10, sizes: ["10ft","9ft", "8ft", "7ft", "6ft"] },
+  { name: "Ghan", price: 20 },
   { name: "Gadar", price: 5, sizes: ["16ft","15ft","14ft","13ft", "12ft", "11ft", "10ft", "9ft", "8ft","7ft"] },
   { name: "Farma",
     priceOptions: [
@@ -140,11 +141,17 @@ const calculateBill = (transactions) => {
   };
 };
 
-export default function RentalsPage({ customers, bills, onSaveBill, isOwner }) {
+export default function RentalsPage({ customers, bills, onSaveBill, onDeleteBill, isOwner }) {
   const [selectedCustomerId, setSelectedCustomerId] = useState(customers[0]?.id || "");
   const [message, setMessage] = useState("");
 
-  const selectedCustomer = customers.find((customer) => customer.id === Number(selectedCustomerId));
+  useEffect(() => {
+    if (!selectedCustomerId && customers.length > 0) {
+      setSelectedCustomerId(customers[0].id);
+    }
+  }, [customers, selectedCustomerId]);
+
+  const selectedCustomer = customers.find((customer) => String(customer.id) === String(selectedCustomerId));
   const bill = selectedCustomer ? calculateBill(selectedCustomer.transactions) : { breakdown: [], pendingItems: [], grandTotal: 0 };
 
   if (!isOwner) {
@@ -164,9 +171,18 @@ export default function RentalsPage({ customers, bills, onSaveBill, isOwner }) {
   const saveBill = () => {
     if (!selectedCustomer) return;
     onSaveBill({
+      customer: selectedCustomer.id,
       customerName: selectedCustomer.name,
       date: formatDate(new Date()),
-      items: bill.breakdown,
+      items: bill.breakdown.map((row) => ({
+        item: row.item,
+        size: row.size,
+        quantity: row.quantity,
+        period: row.period,
+        days: row.days,
+        price: row.price,
+        total: row.amount,
+      })),
       pendingItems: bill.pendingItems,
       grandTotal: bill.grandTotal,
     });
@@ -286,6 +302,7 @@ export default function RentalsPage({ customers, bills, onSaveBill, isOwner }) {
               <th>Customer</th>
               <th>Date</th>
               <th>Total</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -295,6 +312,11 @@ export default function RentalsPage({ customers, bills, onSaveBill, isOwner }) {
                 <td>{savedBill.customerName}</td>
                 <td>{savedBill.date}</td>
                 <td>Rs. {savedBill.grandTotal.toLocaleString("en-IN")}</td>
+                <td>
+                  <button className="details-button remove-button" type="button" onClick={() => onDeleteBill(savedBill.id)}>
+                    Delete
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

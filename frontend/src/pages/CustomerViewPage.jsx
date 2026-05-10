@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import api from "../api";
 import itemImageMap from "../itemImages";
 
-const items = [
+const fallbackItems = [
   {
     name: "Shuttering Plate",
     price: 5,
@@ -20,6 +21,7 @@ const items = [
     ]
   },
   { name: "Chali", price: 10, sizes: ["10ft","9ft", "8ft", "7ft", "6ft"] },
+  { name: "Ghan", price: 20 },
   { name: "Gadar", price: 5, sizes: ["16ft","15ft","14ft","13ft", "12ft", "11ft", "10ft", "9ft", "8ft","7ft"] },
   { name: "Farma",
     priceOptions: [
@@ -53,7 +55,12 @@ const items = [
 
 
 export default function CustomerViewPage() {
+  const [items, setItems] = useState(fallbackItems);
   const [selectedItem, setSelectedItem] = useState(null);
+
+  useEffect(() => {
+    api.get("/items").then((res) => setItems(res.data)).catch(() => setItems(fallbackItems));
+  }, []);
 
   return (
     <section className="customer-view">
@@ -74,7 +81,7 @@ export default function CustomerViewPage() {
           <button className="customer-item-card" key={item.name} type="button" onClick={() => setSelectedItem(item)}>
             <img
               alt={item.name}
-              src={itemImageMap[item.name] || "/images/item-placeholder.svg"}
+              src={itemImageMap[item.imageKey || item.name] || "/images/item-placeholder.svg"}
               onError={(event) => {
                 event.currentTarget.src = "/images/item-placeholder.svg";
               }}
@@ -90,7 +97,7 @@ export default function CustomerViewPage() {
           <img
             alt={selectedItem.name}
             className="selected-item-image"
-            src={itemImageMap[selectedItem.name] || "/images/item-placeholder.svg"}
+            src={itemImageMap[selectedItem.imageKey || selectedItem.name] || "/images/item-placeholder.svg"}
             onError={(event) => {
               event.currentTarget.src = "/images/item-placeholder.svg";
             }}
@@ -100,6 +107,8 @@ export default function CustomerViewPage() {
             <strong>Sizes:</strong>{" "}
             {selectedItem.priceOptions
               ? selectedItem.priceOptions.map((option) => option.size).join(", ")
+              : selectedItem.variants
+              ? selectedItem.variants.map((option) => option.size).join(", ")
               : selectedItem.sizes?.join(", ") || "No size"}
           </p>
         </div>
