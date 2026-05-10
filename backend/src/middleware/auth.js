@@ -1,5 +1,5 @@
 const ADMIN_USERNAME = "admin";
-const ADMIN_PASSWORD = "12345";
+const ADMIN_PASSWORD = "12345"; // test update
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "baba-deep-singh-admin-token";
 
 export const loginAdmin = (req, res) => {
