@@ -30,6 +30,7 @@ const items = [
   { name: "Durmat Machine", price: 500, imageKey: "Durmat Machine" },
   { name: "Lifting Machine", price: 300, imageKey: "Lifting Machine" },
   { name: "Cutter", price: 100, imageKey: "Cutter" },
+  { name:"Vibrator", price: 300, imageKey: "Vibrator" },
   { name: "Grinder", price: 100, imageKey: "Grinder" },
 ];
 

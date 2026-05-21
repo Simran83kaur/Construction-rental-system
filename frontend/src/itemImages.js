@@ -9,6 +9,7 @@ import channelImg from "./assets/images/channel.webp";
 import chaliImg from "./assets/images/Chaali.webp";
 import gadarImg from "./assets/images/Gadar.webp";
 import kainchiImg from "./assets/images/kainchi.webp";
+import VibratorImg from "./assets/images/vibrator.webp";
 
 const itemImageMap = {
   "Shuttering Plate": plateImg,
@@ -23,6 +24,7 @@ const itemImageMap = {
   "Chali": chaliImg,
   "Gadar": gadarImg,
   "Kainchi": kainchiImg,
+  "Vibrator": VibratorImg,
 };
 
 

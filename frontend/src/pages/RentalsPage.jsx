@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import html2canvas from "html2canvas";
+import billingUtils from "../billingUtils";
 
 const items = [
   {
@@ -16,11 +17,16 @@ const items = [
       { size: "8ft", price: 2 },
       { size: "7ft", price: 2 },
       { size: "12ft", price: 3 },
-      { size: "13ft", price: 3 }
+      { size: "13ft", price: 3 },
+      { size: "Mixed", price: 3 }
     ]
   },
   { name: "Chali", price: 10, sizes: ["10ft","9ft", "8ft", "7ft", "6ft"] },
   { name: "Ghan", price: 20 },
+  {name: "Paudi", price: 0},
+  { name: "Peti", price: 2 },
+  { name: "Drum", price: 25},
+  { name: "Vaans", price: 5 },
   { name: "Gadar", price: 5, sizes: ["16ft","15ft","14ft","13ft", "12ft", "11ft", "10ft", "9ft", "8ft","7ft"] },
   { name: "Farma",
     priceOptions: [
@@ -55,14 +61,29 @@ const items = [
 
 
 const getPrice = (itemName, size) => {
-  const item = items.find((currentItem) => currentItem.name === itemName) || items[0];
+  const cleanItemName = String(itemName || "").trim().toLowerCase();
+  const cleanSize = String(size || "").trim();
+  const item = items.find((currentItem) => currentItem.name.toLowerCase() === cleanItemName);
+  if (!item) return 0;
   if (item.priceOptions) {
-    return item.priceOptions.find((option) => option.size === size)?.price || item.priceOptions[0].price;
+    return item.priceOptions.find((option) => option.size === cleanSize)?.price || item.priceOptions[0].price;
   }
   return item.price || 0;
 };
 
 const formatDate = (date) => new Date(date).toISOString().slice(0, 10);
+
+const formatShortDate = (date) => {
+  const value = new Date(date);
+  const day = String(value.getDate()).padStart(2, "0");
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  return `${day}-${month}`;
+};
+
+const formatPeriod = (period, days) => {
+  const [startDate, endDate] = period.split(" to ");
+  return `${formatShortDate(startDate)} to ${formatShortDate(endDate)} (${days} days)`;
+};
 
 const inclusiveDays = (startDate, endDate) => {
   const start = new Date(startDate);
@@ -143,6 +164,11 @@ const calculateBill = (transactions) => {
 
 export default function RentalsPage({ customers, bills, onSaveBill, onDeleteBill, isOwner }) {
   const [selectedCustomerId, setSelectedCustomerId] = useState(customers[0]?.id || "");
+  const [pendingPayment, setPendingPayment] = useState("");
+  const [paidAmount, setPaidAmount] = useState("");
+  const [paymentMode, setPaymentMode] = useState("Cash");
+  const [generatedBill, setGeneratedBill] = useState(null);
+  const [selectedSavedBill, setSelectedSavedBill] = useState(null);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -152,7 +178,11 @@ export default function RentalsPage({ customers, bills, onSaveBill, onDeleteBill
   }, [customers, selectedCustomerId]);
 
   const selectedCustomer = customers.find((customer) => String(customer.id) === String(selectedCustomerId));
-  const bill = selectedCustomer ? calculateBill(selectedCustomer.transactions) : { breakdown: [], pendingItems: [], grandTotal: 0 };
+  const bill = selectedCustomer ? billingUtils.calculateBill(selectedCustomer.transactions) : { breakdown: [], pendingItems: [], grandTotal: 0 };
+  const pendingAmount = Number(pendingPayment) || 0;
+  const advancePaid = Number(paidAmount) || 0;
+  const payableTotal = bill.grandTotal + pendingAmount;
+  const balanceAmount = Math.max(payableTotal - advancePaid, 0);
 
   if (!isOwner) {
     return (
@@ -168,24 +198,35 @@ export default function RentalsPage({ customers, bills, onSaveBill, onDeleteBill
     );
   }
 
-  const saveBill = () => {
+  const saveBill = async () => {
     if (!selectedCustomer) return;
-    onSaveBill({
+    const savedBill = await onSaveBill({
       customer: selectedCustomer.id,
       customerName: selectedCustomer.name,
       date: formatDate(new Date()),
       items: bill.breakdown.map((row) => ({
         item: row.item,
+        itemName: row.item,
         size: row.size,
         quantity: row.quantity,
+        issueDate: row.issueDate,
+        returnDate: row.returnDate,
         period: row.period,
         days: row.days,
         price: row.price,
         total: row.amount,
+        returnedQuantity: row.returnedQuantity,
+        status: row.status,
       })),
       pendingItems: bill.pendingItems,
       grandTotal: bill.grandTotal,
+      pendingAmount,
+      payableTotal,
+      advancePayment: advancePaid,
+      paymentMode,
+      finalBalance: balanceAmount,
     });
+    setGeneratedBill(savedBill);
     setMessage("Bill saved.");
   };
 
@@ -213,12 +254,42 @@ export default function RentalsPage({ customers, bills, onSaveBill, onDeleteBill
         <div className="customer-line">
           <label>
             Customer
-            <select value={selectedCustomerId} onChange={(event) => setSelectedCustomerId(event.target.value)}>
+            <select value={selectedCustomerId} onChange={(event) => {
+              setSelectedCustomerId(event.target.value);
+              setGeneratedBill(null);
+            }}>
               {customers.map((customer) => (
                 <option key={customer.id} value={customer.id}>
                   {customer.name}
                 </option>
               ))}
+            </select>
+          </label>
+          <label>
+            Old Pending Payment
+            <input
+              min="0"
+              placeholder="Rs."
+              type="number"
+              value={pendingPayment}
+              onChange={(event) => setPendingPayment(event.target.value)}
+            />
+          </label>
+          <label>
+            Paid Amount
+            <input
+              min="0"
+              placeholder="Rs."
+              type="number"
+              value={paidAmount}
+              onChange={(event) => setPaidAmount(event.target.value)}
+            />
+          </label>
+          <label>
+            Payment Mode
+            <select value={paymentMode} onChange={(event) => setPaymentMode(event.target.value)}>
+              <option>Cash</option>
+              <option>GPay</option>
             </select>
           </label>
         </div>
@@ -234,6 +305,7 @@ export default function RentalsPage({ customers, bills, onSaveBill, onDeleteBill
               <p>Smalsar, Moga, Punjab | +91 98144-24655</p>
             </div>
             <div className="invoice-meta">
+              <p><strong>Bill No:</strong> {generatedBill?.billNumber || "New Bill"}</p>
               <p><strong>Customer Name:</strong> {selectedCustomer.name}</p>
               <p><strong>Date:</strong> {formatDate(new Date())}</p>
             </div>
@@ -245,7 +317,7 @@ export default function RentalsPage({ customers, bills, onSaveBill, onDeleteBill
                     <th>Item</th>
                     <th>Size</th>
                     <th>Qty</th>
-                    <th>Days</th>
+                    <th>Period</th>
                     <th>Price</th>
                     <th>Total</th>
                   </tr>
@@ -256,7 +328,7 @@ export default function RentalsPage({ customers, bills, onSaveBill, onDeleteBill
                       <td>{row.item}</td>
                       <td>{row.size || "-"}</td>
                       <td>{row.quantity}</td>
-                      <td>{row.days}</td>
+                      <td>{row.displayPeriod || formatPeriod(row.period, row.days)}</td>
                       <td>Rs. {row.price}</td>
                       <td>Rs. {row.amount.toLocaleString("en-IN")}</td>
                     </tr>
@@ -280,6 +352,10 @@ export default function RentalsPage({ customers, bills, onSaveBill, onDeleteBill
               )}
             </div>
             <div className="grand-total">Grand Total: Rs. {bill.grandTotal.toLocaleString("en-IN")}</div>
+            <div className="pending-payment-total">Pending Payment: Rs. {pendingAmount.toLocaleString("en-IN")}</div>
+            <div className="grand-total">Total Payable: Rs. {payableTotal.toLocaleString("en-IN")}</div>
+            <div className="paid-total">Paid: Rs. {advancePaid.toLocaleString("en-IN")} ({paymentMode})</div>
+            <div className="balance-total">Balance: Rs. {balanceAmount.toLocaleString("en-IN")}</div>
           </div>
 
           <div className="button-row">
@@ -299,9 +375,10 @@ export default function RentalsPage({ customers, bills, onSaveBill, onDeleteBill
           <thead>
             <tr>
               <th>SN</th>
+              <th>Bill No</th>
               <th>Customer</th>
               <th>Date</th>
-              <th>Total</th>
+              <th>Balance</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -309,19 +386,60 @@ export default function RentalsPage({ customers, bills, onSaveBill, onDeleteBill
             {bills.map((savedBill, index) => (
               <tr key={savedBill.id}>
                 <td>{index + 1}</td>
+                <td>{savedBill.billNumber || "-"}</td>
                 <td>{savedBill.customerName}</td>
                 <td>{savedBill.date}</td>
-                <td>Rs. {savedBill.grandTotal.toLocaleString("en-IN")}</td>
+                <td>Rs. {(savedBill.finalBalance ?? savedBill.balanceAmount ?? savedBill.payableTotal ?? savedBill.grandTotal).toLocaleString("en-IN")}</td>
                 <td>
-                  <button className="details-button remove-button" type="button" onClick={() => onDeleteBill(savedBill.id)}>
-                    Delete
-                  </button>
+                  <div className="row-actions">
+                    <button className="details-button" type="button" onClick={() => setSelectedSavedBill(savedBill)}>
+                      View Details
+                    </button>
+                    <button className="details-button remove-button" type="button" onClick={() => onDeleteBill(savedBill.id)}>
+                      Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {selectedSavedBill && (
+        <div className="card">
+          <h3>Bill Details: {selectedSavedBill.billNumber || "-"}</h3>
+          <div className="table-card nested-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Size</th>
+                  <th>Qty</th>
+                  <th>Period</th>
+                  <th>Price</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(selectedSavedBill.items || []).map((item, index) => (
+                  <tr key={`${item.item}-${item.period}-${index}`}>
+                    <td>{item.item}</td>
+                    <td>{item.size || "-"}</td>
+                    <td>{item.quantity}</td>
+                    <td>{item.issueDate && item.returnDate ? `${billingUtils.displayDate(item.issueDate)} to ${billingUtils.displayDate(item.returnDate)} (${item.days} days)` : item.period}</td>
+                    <td>Rs. {Number(item.price || 0).toLocaleString("en-IN")}</td>
+                    <td>Rs. {Number(item.total || 0).toLocaleString("en-IN")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p><strong>Pending Amount:</strong> Rs. {Number(selectedSavedBill.pendingAmount ?? selectedSavedBill.pendingPayment ?? 0).toLocaleString("en-IN")}</p>
+          <p><strong>Advance Payment:</strong> Rs. {Number(selectedSavedBill.advancePayment ?? selectedSavedBill.paidAmount ?? 0).toLocaleString("en-IN")} ({selectedSavedBill.paymentMode || "Cash"})</p>
+          <p><strong>Final Balance:</strong> Rs. {Number(selectedSavedBill.finalBalance ?? selectedSavedBill.balanceAmount ?? 0).toLocaleString("en-IN")}</p>
+        </div>
+      )}
     </section>
   );
 }

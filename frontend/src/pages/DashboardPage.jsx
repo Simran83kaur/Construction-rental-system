@@ -1,11 +1,16 @@
 import { useState } from "react";
+import billingUtils from "../billingUtils";
 
 const items = [
   { name: "Shuttering Plate", price: 5 },
   { name: "Channel", price: 5 },
   { name: "Spot", price: 2 },
   { name: "Chali", price: 10 },
+  { name: "Paudi", price: 0 },
+  { name: "Peti", price: 2 },
+  { name: "Drum", price: 25 },
   { name: "Gadar", price: 5 },
+  { name: "Vaans", price: 5 },
   { name: "Farma", price: 60 },
   {
     name: "Scaffolding Frame",
@@ -17,6 +22,7 @@ const items = [
   },
   { name: "Kainchi", price: 0 },
   { name: "Danda", price: 0 },
+  { name: "Vibrator", price: 300 },
   { name: "Durmat Machine", price: 500 },
   { name: "Lifting Machine", price: 300 },
   { name: "Cutter", price: 100 },
@@ -24,9 +30,12 @@ const items = [
 ];
 
 const getPrice = (itemName, size) => {
-  const item = items.find((currentItem) => currentItem.name === itemName) || items[0];
+  const cleanItemName = String(itemName || "").trim().toLowerCase();
+  const cleanSize = String(size || "").trim();
+  const item = items.find((currentItem) => currentItem.name.toLowerCase() === cleanItemName);
+  if (!item) return 0;
   if (item.priceOptions) {
-    return item.priceOptions.find((option) => option.size === size)?.price || item.priceOptions[0].price;
+    return item.priceOptions.find((option) => option.size === cleanSize)?.price || item.priceOptions[0].price;
   }
   return item.price || 0;
 };
@@ -98,9 +107,10 @@ const calculateBill = (transactions) => {
   };
 };
 
-export default function DashboardPage({ customers, onDeleteCustomer, isOwner }) {
+export default function DashboardPage({ customers, bills = [], onDeleteCustomer, isOwner }) {
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
   const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId);
+  const selectedCustomerBills = bills.filter((bill) => String(bill.customer) === String(selectedCustomerId));
 
   const viewTransactions = (customerId) => {
     setSelectedCustomerId(customerId);
@@ -133,7 +143,7 @@ export default function DashboardPage({ customers, onDeleteCustomer, isOwner }) 
                 <td>{index + 1}</td>
                 <td>{customer.name}</td>
                 <td>{customer.mobile}</td>
-                {isOwner && <td>Rs. {calculateBill(customer.transactions).grandTotal.toLocaleString("en-IN")}</td>}
+                {isOwner && <td>Rs. {billingUtils.calculateBill(customer.transactions).grandTotal.toLocaleString("en-IN")}</td>}
                 <td>
                   <div className="row-actions">
                     <button type="button" onClick={() => viewTransactions(customer.id)}>
@@ -169,6 +179,7 @@ export default function DashboardPage({ customers, onDeleteCustomer, isOwner }) 
                 </thead>
                 <tbody>
                   {[...selectedCustomer.transactions]
+                    .filter((transaction) => !transaction.deletedAt)
                     .sort((a, b) => new Date(a.date) - new Date(b.date))
                     .map((transaction) => (
                       <tr key={transaction.id}>
@@ -188,6 +199,36 @@ export default function DashboardPage({ customers, onDeleteCustomer, isOwner }) 
             </div>
           ) : (
             <p className="empty-text">No entries found for this customer yet.</p>
+          )}
+
+          <h3>Bill History</h3>
+          {selectedCustomerBills.length > 0 ? (
+            <div className="table-card nested-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Bill No</th>
+                    <th>Date</th>
+                    <th>Grand Total</th>
+                    <th>Advance</th>
+                    <th>Final Balance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedCustomerBills.map((bill) => (
+                    <tr key={bill.id}>
+                      <td>{bill.billNumber || "-"}</td>
+                      <td>{bill.date || bill.createdAt?.slice(0, 10)}</td>
+                      <td>Rs. {Number(bill.grandTotal || 0).toLocaleString("en-IN")}</td>
+                      <td>Rs. {Number(bill.advancePayment ?? bill.paidAmount ?? 0).toLocaleString("en-IN")}</td>
+                      <td>Rs. {Number(bill.finalBalance ?? bill.balanceAmount ?? bill.grandTotal ?? 0).toLocaleString("en-IN")}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="empty-text">No saved bills found for this customer yet.</p>
           )}
         </div>
       )}

@@ -5,12 +5,14 @@ import CustomersPage from "./pages/CustomersPage";
 import CustomerViewPage from "./pages/CustomerViewPage";
 import ItemsPage from "./pages/ItemsPage";
 import RentalsPage from "./pages/RentalsPage";
+import RecycleBinPage from "./pages/RecycleBinPage";
 
 const pages = [
   { key: "dashboard", label: "Ledger", icon: "📒" },
   { key: "customers", label: "Customers", icon: "👤" },
   { key: "items", label: "Items", icon: "📦" },
   { key: "rentals", label: "Rentals", icon: "🧾" },
+  { key: "recycle", label: "Recycle Bin", icon: "Recycle" },
 ];
 
 const normalizeCustomer = (customer) => ({
@@ -29,6 +31,7 @@ export default function App() {
   const [bills, setBills] = useState([]);
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
   const [message, setMessage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const isAdmin = Boolean(token);
 
@@ -77,6 +80,7 @@ export default function App() {
   const deleteCustomer = async (id) => {
     await api.delete(`/customers/${id}`);
     setCustomers((current) => current.filter((customer) => customer.id !== id));
+    setBills((current) => current.filter((bill) => String(bill.customer) !== String(id)));
   };
 
   const addTransactions = async (customerId, entries) => {
@@ -91,13 +95,38 @@ export default function App() {
 
   const saveBill = async (bill) => {
     const res = await api.post("/bills", bill);
-    setBills((current) => [normalizeBill(res.data), ...current]);
+    const savedBill = normalizeBill(res.data);
+    setBills((current) => [savedBill, ...current]);
+    return savedBill;
   };
 
   const deleteBill = async (billId) => {
     await api.delete(`/bills/${billId}`);
     setBills((current) => current.filter((bill) => bill.id !== billId));
   };
+
+  const matchesCustomerSearch = (customer) => {
+    const value = searchTerm.trim().toLowerCase();
+    if (!value) return true;
+    const customerBills = bills.filter((bill) => String(bill.customer) === String(customer.id));
+    return (
+      customer.name?.toLowerCase().includes(value) ||
+      customer.mobile?.toLowerCase().includes(value) ||
+      customerBills.some((bill) => bill.billNumber?.toLowerCase().includes(value))
+    );
+  };
+
+  const filteredCustomers = customers.filter(matchesCustomerSearch);
+  const filteredBills = bills.filter((bill) => {
+    const value = searchTerm.trim().toLowerCase();
+    if (!value) return true;
+    const customer = customers.find((current) => String(current.id) === String(bill.customer));
+    return (
+      bill.customerName?.toLowerCase().includes(value) ||
+      bill.billNumber?.toLowerCase().includes(value) ||
+      customer?.mobile?.toLowerCase().includes(value)
+    );
+  });
 
   const renderOwnerPage = () => {
     if (!isAdmin) {
@@ -126,7 +155,7 @@ export default function App() {
     if (activePage === "customers") {
       return (
         <CustomersPage
-          customers={customers}
+          customers={filteredCustomers}
           onAddCustomer={addCustomer}
           onDeleteCustomer={deleteCustomer}
           onAddTransactions={addTransactions}
@@ -136,8 +165,9 @@ export default function App() {
       );
     }
     if (activePage === "items") return <ItemsPage isOwner={isAdmin} />;
-    if (activePage === "rentals") return <RentalsPage customers={customers} bills={bills} onSaveBill={saveBill} onDeleteBill={deleteBill} isOwner={isAdmin} />;
-    return <DashboardPage customers={customers} onDeleteCustomer={deleteCustomer} isOwner={isAdmin} />;
+    if (activePage === "rentals") return <RentalsPage customers={filteredCustomers} bills={filteredBills} onSaveBill={saveBill} onDeleteBill={deleteBill} isOwner={isAdmin} />;
+    if (activePage === "recycle") return <RecycleBinPage onChanged={() => loadAdminData()} />;
+    return <DashboardPage customers={filteredCustomers} bills={filteredBills} onDeleteCustomer={deleteCustomer} isOwner={isAdmin} />;
   };
 
   return (
@@ -169,6 +199,14 @@ export default function App() {
 
       <main className={mode === "owner" ? "content" : "content customer-content"}>
         <div className="mode-switch">
+          {isAdmin && mode === "owner" && (
+            <input
+              className="global-search"
+              placeholder="Search customer, mobile, bill number"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
+          )}
           {isAdmin ? (
             <>
               <button className={mode === "owner" ? "active" : ""} type="button" onClick={() => setMode("owner")}>

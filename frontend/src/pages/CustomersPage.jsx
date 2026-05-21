@@ -16,11 +16,16 @@ const items = [
       { size: "8ft", price: 2 },
       { size: "7ft", price: 2 },
       { size: "12ft", price: 3 },
+      { size: "Mixed", price: 3 },
       { size: "13ft", price: 3 }
     ]
   },
   { name: "Chali", price: 10, sizes: ["10ft","9ft", "8ft", "7ft", "6ft"] },
   {name: "Ghan", price: 20},
+  {name: "Vaans",price: 5},
+  { name: "Paudi",price: 0 },
+  { name: "Drum", price: 25 },
+  { name: "Peti", price: 2 },
   { name: "Gadar", price: 5, sizes: ["16ft","15ft","14ft","13ft", "12ft", "11ft", "10ft", "9ft", "8ft","7ft"] },
   { name: "Farma",
     priceOptions: [
@@ -244,7 +249,7 @@ export default function CustomersPage({
             </thead>
 
             <tbody>
-              {selectedCustomer.transactions.map((t) => (
+              {selectedCustomer.transactions.filter((t) => !t.deletedAt).map((t) => (
                 <tr key={t.id}>
                   <td>{t.type}</td>
 

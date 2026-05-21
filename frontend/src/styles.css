@@ -106,6 +106,11 @@ select {
   margin-bottom: 18px;
 }
 
+.global-search {
+  max-width: 360px;
+  margin-right: auto;
+}
+
 .mode-switch button {
   border: 0;
   border-radius: 8px;
@@ -372,6 +377,30 @@ input[readonly] {
   margin: 16px 0;
   font-size: 18px;
   font-weight: 800;
+  text-align: right;
+}
+
+.pending-payment-total {
+  margin: 8px 0;
+  color: #c2410c;
+  font-size: 16px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.paid-total {
+  margin: 8px 0;
+  color: #15803d;
+  font-size: 16px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.balance-total {
+  margin: 8px 0;
+  color: #b91c1c;
+  font-size: 18px;
+  font-weight: 900;
   text-align: right;
 }
 

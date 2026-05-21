@@ -17,11 +17,16 @@ const fallbackItems = [
       { size: "8ft", price: 2 },
       { size: "7ft", price: 2 },
       { size: "12ft", price: 3 },
-      { size: "13ft", price: 3 }
+      { size: "13ft", price: 3 },
+      { size: "Mixed", price: 3 }
     ]
   },
   { name: "Chali", price: 10, sizes: ["10ft","9ft", "8ft", "7ft", "6ft"] },
   { name: "Ghan", price: 20 },
+  { name: "vaans", price: 5 },
+  { name: "peti", price: 2 },
+  { name: "Drum", price: 25},
+  { name: "Paudi", price: 0},
   { name: "Gadar", price: 5, sizes: ["16ft","15ft","14ft","13ft", "12ft", "11ft", "10ft", "9ft", "8ft","7ft"] },
   { name: "Farma",
     priceOptions: [
